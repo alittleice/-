@@ -11,18 +11,24 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv/cv.h>
 
+using namespace cv;
+
 class show_thread : public QThread
 {
     Q_OBJECT
 public:
     explicit show_thread(QObject *parent = nullptr);
 
+public slots:
+        void ShowFarme();
 
 private:
+        QTimer *timer_show;
 
+        Mat mat_image;
+        VideoCapture *capture;
 
-private slots:
-
+        QImage cvMat2QImage(const Mat & mat);   //返回值为QImage的函数
 
 protected:
     //QThread的虚函数
@@ -31,7 +37,7 @@ protected:
     void run();
 
 signals:
-    void isDone();    //线程结束槽函数
+    void signal_Done(QImage imag, int count);    //线程结束槽函数
 
 };
 
