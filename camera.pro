@@ -5,7 +5,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = camera
 TEMPLATE = app
 
-UI_DIR=./UI
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -20,15 +19,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp \
-    show_thread.cpp
+    widget.cpp
 
 HEADERS += \
-    mainwindow.h \
-    show_thread.h
+    widget.h
 
 FORMS += \
-    mainwindow.ui
+    widget.ui
 
 INCLUDEPATH += /home/icedot/linux/opencv-3.4.1/install/include
 
@@ -39,12 +36,11 @@ INCLUDEPATH += /home/icedot/linux/opencv-3.4.1/install/include
 #        ../../lib/libopencv_imgcodecs.so \
 #        -lpthread
 
+
 LIBS += /home/icedot/linux/opencv-3.4.1/install/lib/libopencv_core.so \
         /home/icedot/linux/opencv-3.4.1/install/lib/libopencv_highgui.so \
         /home/icedot/linux/opencv-3.4.1/install/lib/libopencv_imgproc.so \
         /home/icedot/linux/opencv-3.4.1/install/lib/libopencv_videoio.so \
         /home/icedot/linux/opencv-3.4.1/install/lib/libopencv_imgcodecs.so \
         -lpthread
-
-
 
