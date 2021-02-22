@@ -43,19 +43,17 @@ public:
 
     Ui::MainWindow *ui;
 
-    CvCapture *camera;  //视频获取结构，用来作为视频获取函数的一个参数
-//    IplImage *frame;    //申请 Ipllmage类型指针，就是申请内存空间来存放每一帧图像
     QImage imag;        //声明Qlmage对象
 
-    void dealDone(QImage imag, int count);   //线程槽函数
+    void dealDone();   //线程槽函数
 
 
 
 private slots:
 
     //定时器槽函数
-    void ReadFarme();
-
+//    void ReadFarme();
+    void ShowFarme();
 //    void SendFarme();
 
     //tcp连接断开槽函数
@@ -70,15 +68,10 @@ private slots:
 
 private:
 
-
-
-
-
-
     void Initcamara();
 
     QTimer timer_read;
-    QTimer *timer_show;
+    QTimer timer_show;
     QTimer timer_send;
 
  //   QTcpSocket *mSocketM;

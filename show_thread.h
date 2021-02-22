@@ -24,12 +24,6 @@ public slots:
 
 private:
         QTimer *timer_show;
-
-        Mat mat_image;
-        VideoCapture *capture;
-
-        QImage cvMat2QImage(const Mat & mat);   //返回值为QImage的函数
-
 protected:
     //QThread的虚函数
     //线程处理函数
@@ -37,7 +31,7 @@ protected:
     void run();
 
 signals:
-    void signal_Done(QImage imag, int count);    //线程结束槽函数
+    void signal_Done();    //线程结束槽函数
 
 };
 
