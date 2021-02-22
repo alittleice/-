@@ -7,3 +7,5 @@
     capture->read(mat_image);
     QImage imag = cvMat2QImage(mat_image);
     mat_image.release();
+
+3、更换为v4l2框架采集图像
