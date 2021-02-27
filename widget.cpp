@@ -1,9 +1,10 @@
 #include "widget.h"
 #include "ui_widget.h"
 
-#define serverip "192.168.0.111"
+#define serverip "192.168.0.105"
 #define port     8888
 
+int fd;
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -13,26 +14,40 @@ Widget::Widget(QWidget *parent)
     this->setAttribute(Qt::WA_AcceptTouchEvents);
     this->installEventFilter(this); //安装事件过滤器,这个安装在widget主窗口下
 
-    //摄像头初始化
-    Initcamara();
-
-    //分配线程空间
-    //thread = new show_thread(this);         //给对象thread 分配一个空间
-    //启动线程，处理数据
-    //connect(thread, &show_thread::signal_Done, this, &MainWindow::dealDone);
-    //thread->start();
+    fd = open("/dev/ap3216c", O_RDWR);   //打开光敏传感器
+    if(fd < 0)
+            printf("can't open file /dev/ap3216c\r\n");
 
     //初始化套接字对象
     mSocketM = new QTcpSocket;
     ui->btndisconnect->setEnabled(false);   //断开按钮默认不能按下
     ui->state->setText("TCP状态：未连接");    //默认状态为断开
 
+    //timer_send定时器在连接成功槽函数中打开
+    connect(&timer_send, SIGNAL(timeout()), this, SLOT(SendFarme()));
+    connect(mSocketM,SIGNAL(readyRead()),this,SLOT(recvData()));//连接接收槽函数
+    //摄像头初始化
+    Initcamara();
+
 }
-void Widget::dealDone(QImage imag, int count) //线程槽函数
+unsigned short  Widget::read_ap3216c()
 {
-    //ui->state->setText("TCP状态：OK");         //默认状态为断开
-    ui->image->setPixmap(QPixmap::fromImage(imag));
-    ui->lcdNumber->display(count);
+    int ret;
+    unsigned short  als;
+    unsigned short databuf[3];
+    ret = read(fd, databuf, sizeof(databuf));
+    if(ret == 0) { 			/* 数据读取成功 */
+        als = databuf[1]; 	/* 光强传感器数据 */
+        //printf("als = %d\r\n",als);
+    }
+    else
+        return -1;
+    return als;
+}
+
+void Widget::dealDone() //线程槽函数
+{
+
 }
 
 void Widget::Initcamara()//初始化
@@ -41,11 +56,12 @@ void Widget::Initcamara()//初始化
     //读取摄像头数据--方法二
     capture = new VideoCapture(0);
 
+    timer_read.start(20);
+    connect(&timer_read, SIGNAL(timeout()), this, SLOT(ReadFarme()));
     timer_show.start(40);
     connect(&timer_show, SIGNAL(timeout()), this, SLOT(ShowFarme()));
 
-    //timer_send定时器在连接成功槽函数中打开
-    connect(&timer_send, SIGNAL(timeout()), this, SLOT(SendFarme()));
+
 #endif
 }
 
@@ -54,35 +70,10 @@ bool Widget::eventFilter(QObject *obj, QEvent *e)
 {
     switch( e->type() )
     {
-        case QEvent::TouchBegin:
-        {
-            ui->label->setText("TouchBegin");
-            printf("TouchBegin\n");
-            return true;
-        }
-
-        case QEvent::TouchUpdate:
-        {
-            ui->label->setText("TouchUpdate");
-            printf("TouchUpdate\n");
-            return true;
-        }
-        case QEvent::TouchEnd:
-        {
-            ui->label->setText("TouchEnd");
-            printf("TouchEnd\n");
-            return true;
-        }
-        case QEvent::MouseButtonPress:
-        {
-            ui->label->setText("MouseButtonPress");
-            return true;
-        }
         case QEvent::MouseButtonRelease:
         {
             capture->release();             //触摸屏幕会导致图像错乱,所以松开时重新加载VideoCapture
             capture = new VideoCapture(0);
-            ui->label->setText("MouseButtonRelease");
             return true;
         }
         default:
@@ -90,10 +81,14 @@ bool Widget::eventFilter(QObject *obj, QEvent *e)
         }
 }
 
-void Widget::ShowFarme()
+void Widget::ReadFarme()
 {
     capture->read(mat_image);
     imag = cvMat2QImage(mat_image);
+}
+
+void Widget::ShowFarme()
+{
     ui->image->setPixmap(QPixmap::fromImage(imag));
 }
 
@@ -101,21 +96,52 @@ void Widget::ShowFarme()
 #if 1
 void Widget::SendFarme()//这个函数属于Widget
 {
-    QPixmap pixmap = QPixmap::fromImage(imag);  //把img转成位图，我们要转成jpg格式
+    static int send_count = 0;
+    if(send_count < 20)
+    {
+        QPixmap pixmap = QPixmap::fromImage(imag);  //把img转成位图，我们要转成jpg格式
 
+        QByteArray ba;
+        QBuffer buf(&ba); //把ba绑定到buf上，操作buf就等于操作ba 因为在内存资源很珍贵的情况下，会比较适合使用QByteArray
+        pixmap.save(&buf,"jpg",50); //把pixmap保存成jpg，压缩质量50 数据保存到buf
+
+        mSocketM->write("start");
+        //mSocketM->write(ba);        //发送图像
+        mSocketM->write(ba,ba.size());//发送指定大小？
+    }
+    else
+    {
+        unsigned short  als = read_ap3216c();
+        QByteArray ba = intTo4ByteArray(als);
+        mSocketM -> write("ap3216c");
+        mSocketM -> write(ba);
+        send_count = 0;
+    }
+    send_count++;
+
+}
+void Widget::recvData()
+{
+    QByteArray array;
+    array = mSocketM->readAll();
+    ui->label->setText(array);
+}
+
+QByteArray Widget::intTo4ByteArray(unsigned short i)
+{
     QByteArray ba;
-    QBuffer buf(&ba); //把ba绑定到buf上，操作buf就等于操作ba 因为在内存资源很珍贵的情况下，会比较适合使用QByteArray
-    pixmap.save(&buf,"jpg",50); //把pixmap保存成jpg，压缩质量50 数据保存到buf
-
-    mSocketM->write("start");
-    mSocketM->write(ba);        //发送图像
-    //len = m_tcpSocket->write(buf,len);//发送指定大小？
+    ba.resize(4);
+    ba[0] = (uchar)( 0x000f&i);
+    ba[1] = (uchar)((0x00f0&i)>>4);
+    ba[2] = (uchar)((0x0f00&i)>>8);
+    ba[3] = (uchar)((0xf000&i)>>12);
+    return ba;
 }
 #endif
 
 
 #if 1
-void Widget::on_btnconnect_clicked()    //连接服务端槽函数
+void Widget::on_btnconnect_clicked()    //连接按钮槽函数
 {
     capture->release();             //触摸屏幕会导致图像错乱,所以松开时重新加载VideoCapture
     capture = new VideoCapture(0);
@@ -128,7 +154,7 @@ void Widget::on_btnconnect_clicked()    //连接服务端槽函数
     mSocketM->connectToHost(serverip, port);
 }
 
-void Widget::on_btndisconnect_clicked()    //断开服务端槽函数
+void Widget::on_btndisconnect_clicked()    //断开按钮槽函数
 {
     capture->release();             //触摸屏幕会导致图像错乱,所以松开时重新加载VideoCapture
     capture = new VideoCapture(0);
@@ -138,12 +164,11 @@ void Widget::on_btndisconnect_clicked()    //断开服务端槽函数
 
 void Widget::connect_suc()    //连接成功槽函数
 {
-    ui->state->setText("状态:已连接");
+    ui->state->setText("状态：已连接");
     ui->btndisconnect->setEnabled(true);    //断开按钮可以按下
     ui->btnconnect->setEnabled(false);      //连接按钮不能按下
 
-    timer_send.start(30);                   //连接成功，开始发送图像
-
+    timer_send.start(40);                   //连接成功，开始发送图像
 }
 
 void Widget::client_dis()     //掉线槽函数
@@ -155,10 +180,6 @@ void Widget::client_dis()     //掉线槽函数
     timer_send.stop();                   //连接断开，停止发送图像
 }
 #endif
-//void Widget::on_send_clicked()
-//{
-//    ui->state->setText("点击了发送");
-//}
 
 QImage Widget::cvMat2QImage(const Mat& mat)    // Mat 转为 QImage
 {
@@ -184,7 +205,7 @@ QImage Widget::cvMat2QImage(const Mat& mat)    // Mat 转为 QImage
     {
         const uchar *pSrc = (const uchar*)mat.data;			// 复制像素
         QImage image(pSrc, mat.cols, mat.rows, mat.step, QImage::Format_RGB888);	// R, G, B 对应 0,1,2
-        return image.rgbSwapped();				// rgbSwapped是为了显示效果色彩好一些。
+        return image.rgbSwapped().mirrored(true,true);				// rgbSwapped是为了显示效果色彩好一些。
     }
     else if (mat.type() == CV_8UC4)
     {
@@ -216,6 +237,19 @@ void Widget::on_send_clicked()
 {
     capture->release();             //触摸屏幕会导致图像错乱,所以松开时重新加载VideoCapture
     capture = new VideoCapture(0);
+
+    QPixmap pixmap = QPixmap::fromImage(imag);  //把img转成位图，我们要转成jpg格式
+
+    QByteArray ba;
+    QBuffer buf(&ba); //把ba绑定到buf上，操作buf就等于操作ba 因为在内存资源很珍贵的情况下，会比较适合使用QByteArray
+    pixmap.save(&buf,"jpg",50); //把pixmap保存成jpg，压缩质量50 数据保存到buf
+
+    mSocketM->write("start");
+    mSocketM->write(ba);        //发送图像
+    //mSocketM->write(ba,ba.size());//发送指定大小？
+
+
+
 }
 
 
