@@ -1,10 +1,14 @@
 #include "widget.h"
 #include "ui_widget.h"
 
-#define serverip "192.168.0.105"
-#define port     8888
+#define serverip "192.168.43.115"
+//#define serverip "192.168.1.226"
+//#define serverip "192.168.1.131"
+#define port     9000
 
-int fd;
+int fd_ap3216c;     //光敏传感器文件句柄
+int fd_led;         //LED灯文件句柄
+
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -14,9 +18,13 @@ Widget::Widget(QWidget *parent)
     this->setAttribute(Qt::WA_AcceptTouchEvents);
     this->installEventFilter(this); //安装事件过滤器,这个安装在widget主窗口下
 
-    fd = open("/dev/ap3216c", O_RDWR);   //打开光敏传感器
-    if(fd < 0)
+    //初始化外设
+    fd_ap3216c = open("/dev/ap3216c", O_RDWR);   //打开光敏传感器
+    if(fd_ap3216c < 0)
             printf("can't open file /dev/ap3216c\r\n");
+    fd_led = open("/dev/dtsplatled", O_RDWR);   //打开光敏传感器
+    if(fd_led < 0)
+            printf("can't open file /dev/dtsplatled\r\n");
 
     //初始化套接字对象
     mSocketM = new QTcpSocket;
@@ -26,16 +34,18 @@ Widget::Widget(QWidget *parent)
     //timer_send定时器在连接成功槽函数中打开
     connect(&timer_send, SIGNAL(timeout()), this, SLOT(SendFarme()));
     connect(mSocketM,SIGNAL(readyRead()),this,SLOT(recvData()));//连接接收槽函数
+
     //摄像头初始化
     Initcamara();
 
 }
+//读取光敏传感器数据
 unsigned short  Widget::read_ap3216c()
 {
     int ret;
     unsigned short  als;
     unsigned short databuf[3];
-    ret = read(fd, databuf, sizeof(databuf));
+    ret = read(fd_ap3216c, databuf, sizeof(databuf));
     if(ret == 0) { 			/* 数据读取成功 */
         als = databuf[1]; 	/* 光强传感器数据 */
         //printf("als = %d\r\n",als);
@@ -43,6 +53,17 @@ unsigned short  Widget::read_ap3216c()
     else
         return -1;
     return als;
+}
+//设置led灯开关状态
+short Widget::write_led(unsigned short state)
+{
+    int ret;
+    ret = write(fd_led, &state, sizeof(state));
+    if(ret == 0) { 			/* 数据读取成功 */
+        return 0;
+    }
+    else
+        return -1;
 }
 
 void Widget::dealDone() //线程槽函数
@@ -97,7 +118,7 @@ void Widget::ShowFarme()
 void Widget::SendFarme()//这个函数属于Widget
 {
     static int send_count = 0;
-    if(send_count < 20)
+    if(send_count < 20) //20帧图发送一次传感器数据
     {
         QPixmap pixmap = QPixmap::fromImage(imag);  //把img转成位图，我们要转成jpg格式
 
@@ -106,7 +127,7 @@ void Widget::SendFarme()//这个函数属于Widget
         pixmap.save(&buf,"jpg",50); //把pixmap保存成jpg，压缩质量50 数据保存到buf
 
         mSocketM->write("start");
-        //mSocketM->write(ba);        //发送图像
+        //mSocketM->write(ba);        //发送图像 ba保存着图像数据
         mSocketM->write(ba,ba.size());//发送指定大小？
     }
     else
@@ -124,7 +145,15 @@ void Widget::recvData()
 {
     QByteArray array;
     array = mSocketM->readAll();
+    //判断开关灯状态
+    if(array.operator==("light on")){
+        write_led(1);
+    }
+    else if(array.operator==("light off")){
+        write_led(0);
+    }
     ui->label->setText(array);
+
 }
 
 QByteArray Widget::intTo4ByteArray(unsigned short i)
@@ -150,8 +179,10 @@ void Widget::on_btnconnect_clicked()    //连接按钮槽函数
     connect(mSocketM, SIGNAL(connected()), this, SLOT(connect_suc()));
     //检测掉线信号
     connect(mSocketM, SIGNAL(disconnected()), this, SLOT(client_dis()));
+
     //连接服务器，设置ip和端口号
     mSocketM->connectToHost(serverip, port);
+
 }
 
 void Widget::on_btndisconnect_clicked()    //断开按钮槽函数
@@ -164,7 +195,7 @@ void Widget::on_btndisconnect_clicked()    //断开按钮槽函数
 
 void Widget::connect_suc()    //连接成功槽函数
 {
-    ui->state->setText("状态：已连接");
+    ui->state->setText("TCP状态：已连接");
     ui->btndisconnect->setEnabled(true);    //断开按钮可以按下
     ui->btnconnect->setEnabled(false);      //连接按钮不能按下
 
@@ -173,7 +204,7 @@ void Widget::connect_suc()    //连接成功槽函数
 
 void Widget::client_dis()     //掉线槽函数
 {
-    ui->state->setText("状态：已断开");
+    ui->state->setText("TCP状态：已断开");
     ui->btndisconnect->setEnabled(false);   //断开按钮不能按下
     ui->btnconnect->setEnabled(true);       //连接按钮可以按下
 
@@ -247,7 +278,6 @@ void Widget::on_send_clicked()
     mSocketM->write("start");
     mSocketM->write(ba);        //发送图像
     //mSocketM->write(ba,ba.size());//发送指定大小？
-
 
 
 }

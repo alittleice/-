@@ -102,6 +102,7 @@ private:
 
     QTcpSocket *mSocketM;
     unsigned short  read_ap3216c();
+    short write_led(unsigned short state);
     QByteArray intTo4ByteArray(unsigned short i);
 
     //show_thread *thread;    //线程对象 定义了thread的属性为show_thread
