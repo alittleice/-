@@ -89,8 +89,6 @@ private:
     CvCapture *camera;  //视频获取结构，用来作为视频获取函数的一个参数
     QImage imag;        //声明Qlmage对象
 
-    void dealDone();   //线程槽函数
-
     QImage cvMat2QImage(const Mat & mat);   //返回值为QImage的函数
 
 

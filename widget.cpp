@@ -15,6 +15,7 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
 
+    //安装事件过滤器
     this->setAttribute(Qt::WA_AcceptTouchEvents);
     this->installEventFilter(this); //安装事件过滤器,这个安装在widget主窗口下
 
@@ -34,6 +35,10 @@ Widget::Widget(QWidget *parent)
     //timer_send定时器在连接成功槽函数中打开
     connect(&timer_send, SIGNAL(timeout()), this, SLOT(SendFarme()));
     connect(mSocketM,SIGNAL(readyRead()),this,SLOT(recvData()));//连接接收槽函数
+
+    //默认灯光为关闭
+    write_led(0);
+    ui->label->setText("light off");
 
     //摄像头初始化
     Initcamara();
@@ -66,21 +71,17 @@ short Widget::write_led(unsigned short state)
         return -1;
 }
 
-void Widget::dealDone() //线程槽函数
-{
-
-}
-
 void Widget::Initcamara()//初始化
 {
 #if 1
     //读取摄像头数据--方法二
     capture = new VideoCapture(0);
 
-    timer_read.start(20);
     connect(&timer_read, SIGNAL(timeout()), this, SLOT(ReadFarme()));
-    timer_show.start(40);
+    timer_read.start(30);
+
     connect(&timer_show, SIGNAL(timeout()), this, SLOT(ShowFarme()));
+    timer_show.start(40);
 
 
 #endif
@@ -269,14 +270,14 @@ void Widget::on_send_clicked()
     capture->release();             //触摸屏幕会导致图像错乱,所以松开时重新加载VideoCapture
     capture = new VideoCapture(0);
 
-    QPixmap pixmap = QPixmap::fromImage(imag);  //把img转成位图，我们要转成jpg格式
+//    QPixmap pixmap = QPixmap::fromImage(imag);  //把img转成位图，我们要转成jpg格式
 
-    QByteArray ba;
-    QBuffer buf(&ba); //把ba绑定到buf上，操作buf就等于操作ba 因为在内存资源很珍贵的情况下，会比较适合使用QByteArray
-    pixmap.save(&buf,"jpg",50); //把pixmap保存成jpg，压缩质量50 数据保存到buf
+//    QByteArray ba;
+//    QBuffer buf(&ba); //把ba绑定到buf上，操作buf就等于操作ba 因为在内存资源很珍贵的情况下，会比较适合使用QByteArray
+//    pixmap.save(&buf,"jpg",50); //把pixmap保存成jpg，压缩质量50 数据保存到buf
 
-    mSocketM->write("start");
-    mSocketM->write(ba);        //发送图像
+//    mSocketM->write("start");
+//    mSocketM->write(ba);        //发送图像
     //mSocketM->write(ba,ba.size());//发送指定大小？
 
 
