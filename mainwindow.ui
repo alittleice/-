@@ -33,7 +33,7 @@
     <property name="geometry">
      <rect>
       <x>670</x>
-      <y>420</y>
+      <y>390</y>
       <width>120</width>
       <height>60</height>
      </rect>
@@ -115,14 +115,27 @@
    <widget class="QPushButton" name="OffLight">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>420</y>
+      <x>870</x>
+      <y>390</y>
       <width>120</width>
       <height>60</height>
      </rect>
     </property>
     <property name="text">
      <string>关灯</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="disconnect">
+    <property name="geometry">
+     <rect>
+      <x>770</x>
+      <y>480</y>
+      <width>120</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>断开</string>
     </property>
    </widget>
   </widget>

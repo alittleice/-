@@ -7,7 +7,7 @@
 #include <QPixmap>
 
 
-#define PORT 8888//指定通信所用端口
+#define PORT 9000//指定通信所用端口
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -50,7 +50,7 @@ void MainWindow::recvData()
     QByteArray array;
     array = socket->readAll();
     //qDebug() << "array.size:" << array.size();
-    if(array.mid(0,5).operator==("start")){
+    if(array.mid(0,5).operator==("start")){     //该帧数据只有图像信息
         //qDebug() << "start";
 
         //说明这又是新的一帧数据，图像保存到显示数组上，清空图像缓冲区，重新接受数据
@@ -63,7 +63,7 @@ void MainWindow::recvData()
 
         //qDebug() << "show_array.size:" << show_array.size();
     }
-    else if(array.mid(0,7).operator==("ap3216c")){
+    else if(array.mid(0,7).operator==("ap3216c")){  //说明该帧数据只包含光敏信息
         //qDebug() << "ap3216c:";
         //去掉非图像信息--ap3216c
         array.remove(0,7);
@@ -107,4 +107,11 @@ void MainWindow::on_OffLight_clicked()
 {
     QByteArray array = "light off";
     socket->write(array,array.size());  //发送关灯
+}
+
+void MainWindow::on_disconnect_clicked()    //断开TCP连接
+{
+//    断开前关灯
+    on_OffLight_clicked();
+    socket->close();
 }
