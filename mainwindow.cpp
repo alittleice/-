@@ -50,6 +50,7 @@ void MainWindow::recvData()
     QByteArray array;
     array = socket->readAll();
     //qDebug() << "array.size:" << array.size();
+    qDebug() << array.mid(0,7);
     if(array.mid(0,5).operator==("start")){     //该帧数据只有图像信息
         //qDebug() << "start";
 
@@ -69,8 +70,10 @@ void MainWindow::recvData()
         array.remove(0,7);
         unsigned short i = ByteArray4Toint(array);
         ui->label->setNum(i);
+        //qDebug() << "size:" << array.size();
         array.clear();
         //qDebug() << "array:" << array.data();
+
     }
     rece_array.append(array);
 
@@ -109,9 +112,9 @@ void MainWindow::on_OffLight_clicked()
     socket->write(array,array.size());  //发送关灯
 }
 
-void MainWindow::on_disconnect_clicked()    //断开TCP连接
-{
+//void MainWindow::on_disconnect_clicked()    //断开TCP连接
+//{
 //    断开前关灯
-    on_OffLight_clicked();
-    socket->close();
-}
+//    on_OffLight_clicked();
+//    socket->close();
+//}

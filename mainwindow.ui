@@ -26,14 +26,17 @@
    <bool>false</bool>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>上位机监控软件</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="OpenLight">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>390</y>
+      <x>680</x>
+      <y>450</y>
       <width>120</width>
       <height>60</height>
      </rect>
@@ -45,8 +48,8 @@
    <widget class="QLabel" name="show_image">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>0</y>
+      <x>10</x>
+      <y>90</y>
       <width>640</width>
       <height>480</height>
      </rect>
@@ -58,10 +61,10 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>50</y>
+      <x>850</x>
+      <y>140</y>
       <width>131</width>
-      <height>61</height>
+      <height>51</height>
      </rect>
     </property>
     <property name="font">
@@ -77,10 +80,10 @@
    <widget class="QLabel" name="label_state">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>130</y>
+      <x>680</x>
+      <y>230</y>
       <width>331</width>
-      <height>161</height>
+      <height>51</height>
      </rect>
     </property>
     <property name="font">
@@ -96,10 +99,10 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>50</y>
+      <x>680</x>
+      <y>140</y>
       <width>131</width>
-      <height>61</height>
+      <height>51</height>
      </rect>
     </property>
     <property name="font">
@@ -116,7 +119,7 @@
     <property name="geometry">
      <rect>
       <x>870</x>
-      <y>390</y>
+      <y>450</y>
       <width>120</width>
       <height>60</height>
      </rect>
@@ -125,19 +128,75 @@
      <string>关灯</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="disconnect">
+   <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>480</y>
-      <width>120</width>
-      <height>60</height>
+      <x>270</x>
+      <y>10</y>
+      <width>441</width>
+      <height>71</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>黑体</family>
+      <pointsize>26</pointsize>
+     </font>
+    </property>
     <property name="text">
-     <string>断开</string>
+     <string>鸡舍远程监控系统平台--上位机</string>
     </property>
    </widget>
+   <widget class="QWidget" name="verticalLayoutWidget_3">
+    <property name="geometry">
+     <rect>
+      <x>-1</x>
+      <y>-1</y>
+      <width>1031</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_3"/>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>340</y>
+      <width>379</width>
+      <height>211</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>控制</string>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>90</y>
+      <width>379</width>
+      <height>249</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>状态</string>
+    </property>
+   </widget>
+   <zorder>groupBox_2</zorder>
+   <zorder>groupBox</zorder>
+   <zorder>OpenLight</zorder>
+   <zorder>show_image</zorder>
+   <zorder>label</zorder>
+   <zorder>label_state</zorder>
+   <zorder>label_2</zorder>
+   <zorder>OffLight</zorder>
+   <zorder>label_3</zorder>
+   <zorder>verticalLayoutWidget_3</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

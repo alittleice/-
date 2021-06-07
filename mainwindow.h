@@ -36,7 +36,7 @@ private slots:
 
     void on_OffLight_clicked();
 
-    void on_disconnect_clicked();
+//    void on_disconnect_clicked();
 
 private:
     Ui::MainWindow *ui;
