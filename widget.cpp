@@ -78,10 +78,10 @@ void Widget::Initcamara()//初始化
     capture = new VideoCapture(0);
 
     connect(&timer_read, SIGNAL(timeout()), this, SLOT(ReadFarme()));
-    timer_read.start(30);
+    //timer_read.start(30);
 
     connect(&timer_show, SIGNAL(timeout()), this, SLOT(ShowFarme()));
-    timer_show.start(40);
+    //timer_show.start(40);
 
 
 #endif
@@ -118,14 +118,17 @@ void Widget::ShowFarme()
 #if 1
 void Widget::SendFarme()//这个函数属于Widget
 {
+
     static int send_count = 0;
     if(send_count < 20) //20帧图发送一次传感器数据
     {
+        ReadFarme();
+        ShowFarme();
         QPixmap pixmap = QPixmap::fromImage(imag);  //把img转成位图，我们要转成jpg格式
 
         QByteArray ba;
         QBuffer buf(&ba); //把ba绑定到buf上，操作buf就等于操作ba 因为在内存资源很珍贵的情况下，会比较适合使用QByteArray
-        pixmap.save(&buf,"jpg",50); //把pixmap保存成jpg，压缩质量50 数据保存到buf
+        pixmap.save(&buf,"jpg",30); //把pixmap保存成jpg，压缩质量30 数据保存到buf
 
         mSocketM->write("start");
         //mSocketM->write(ba);        //发送图像 ba保存着图像数据
